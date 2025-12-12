@@ -1,73 +1,93 @@
-# React + TypeScript + Vite
+# 📱 WhatsApp Clone – Real-Time Chat Application (MERN + Socket.io)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack real-time messaging application inspired by WhatsApp.  
+Supports **secure authentication, email verification, private 1-to-1 chats, and group chats** with live message updates.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+### 🔐 Authentication & Security
+- User registration & login  
+- Email verification  
+- JWT authentication  
+- Protected routes  
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+### 💬 Messaging System
+- **Two-way private chats** (1:1)  
+- **Group chats**  
+- Real-time messaging via Socket.io  
+- Online/offline status (optional)  
 
-## Expanding the ESLint configuration
+### 📡 Real-Time Features
+- Socket.io for live message updates  
+- Instant chat list updates  
+- Real-time notifications  
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### 🗄️ Backend Logic
+- Node.js + Express  
+- MongoDB database with Mongoose  
+- Models: Users, Conversations, Messages  
+- REST API for CRUD operations  
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### 🖥️ Frontend
+- React  
+- Chat interface with real-time updates  
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🛠️ Tech Stack
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### **Frontend**
+- React  
+- Axios  
+- Socket.io-client  
+- CSS / Tailwind / styled-components  
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+### **Backend**
+- Node.js + Express  
+- Socket.io  
+- JWT authentication  
+- Nodemailer for email verification  
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+### **Database**
+- MongoDB (with Mongoose)
+
+---
+
+## 📦 Installation & Setup
+
+### **1. Clone the repository**
+```bash
+git clone https://github.com/NarekXachatryan410/Project.git
+cd whatsapp-clone
+
+## **2. Install Dependencies**
+```bash
+Backend:
+  npm install
+  npm run socket
+  npm run dev
+Frontend
+  npm install
+  npm run dev
+
+## **3. File structure**
+/backend
+  /controllers
+  /db
+  /middlewares
+  /models
+  /routes
+  /schemas
+  /socket-connection
+  index.js
+
+/frontend
+  /src
+    /api
+    /auth
+    /general
+    /lib
+    /modals
+    main.tsx
