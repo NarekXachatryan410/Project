@@ -6,6 +6,7 @@ export interface IMessage {
     attachment: string
     createdAt: string
     read: boolean
+    error?: string
 }
 
 export interface IGroup {

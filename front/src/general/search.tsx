@@ -12,12 +12,6 @@ export default function SearchPage() {
   const [recent, setRecent] = useState<IUser[]>([]);
   const navigate = useNavigate();
 
-  // 🕒 Load recent searches
-  useEffect(() => {
-    const saved = localStorage.getItem("recentSearches");
-    if (saved) setRecent(JSON.parse(saved));
-  }, []);
-
   // 🔍 Live search
   useEffect(() => {
     if (!text.trim()) {
@@ -108,35 +102,6 @@ export default function SearchPage() {
               transition={{ repeat: Infinity, duration: 2.5, ease: "linear" }}
               style={{ backgroundSize: "200%" }}
             />
-          </motion.div>
-        )}
-
-        {/* Recent searches */}
-        {users.length === 0 && !text.trim() && recent.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="max-w-3xl mx-auto w-full"
-          >
-            <h3 className="flex items-center gap-2 text-gray-600 mb-4">
-              <Clock className="w-4 h-4" /> Recent Searches
-            </h3>
-            <div className="space-y-3">
-              {recent.map((u) => (
-                <motion.div
-                  key={u._id}
-                  className="flex items-center gap-4 bg-white/80 p-4 rounded-2xl shadow hover:bg-white/90 hover:shadow-xl transition cursor-pointer"
-                  whileHover={{ scale: 1.02, rotate: -0.3 }}
-                  onClick={() => handleUserClick(u)}
-                >
-                  <img src={!u.picture ? import.meta.env.VITE_DEFAULT_PIC : import.meta.env.VITE_BASE + u.picture} className="w-12 h-12 rounded-full"/>
-                  <div>
-                    <p className="text-gray-800 font-medium">{u.name} {u.surname}</p>
-                    <p className="text-gray-500 text-sm">@{u.login}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
           </motion.div>
         )}
 

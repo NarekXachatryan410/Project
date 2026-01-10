@@ -62,7 +62,8 @@ Supports **secure authentication, email verification, private 1-to-1 chats, and 
 git clone https://github.com/NarekXachatryan410/Project.git
 cd whatsapp-clone
 
-## **2. Install Dependencies**
+
+### **2. Install Dependencies**
 ```bash
 Backend:
   npm install
@@ -72,7 +73,7 @@ Frontend
   npm install
   npm run dev
 
-## **3. File structure**
+### **3. File structure**
 /backend
   /controllers
   /db

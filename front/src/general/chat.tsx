@@ -15,88 +15,106 @@ export default function ChatPage() {
   const [contextMenu, setContextMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
-
+  const [blockedError, setBlockedError] = useState("");
   const { id } = useParams();
   const navigate = useNavigate();
   const bottomRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Fetch initial data
   useEffect(() => {
     if (!id) return;
-    const fetchData = async () => {
-      const userRes = await Axios.get("/account/" + id);
-      setUser(userRes.data.user);
 
-      const meRes = await Axios.get("/account/me");
+    const fetchData = async () => {
+      const [userRes, meRes, chatRes] = await Promise.all([
+        Axios.get("/account/" + id),
+        Axios.get("/account/me"),
+        Axios.get("/chats/" + id)
+      ]);
+
+      setUser(userRes.data.user);
       setMyself(meRes.data.user);
 
-      const chatRes = await Axios.get("/chats/" + id);
       const msgs: IMessage[] = chatRes.data.messages;
       setMessages(msgs);
 
+      // Mark unread messages as read
       if (meRes.data.user?._id) {
-        const unreadMessages = msgs.filter((m) => m.to === meRes.data.user._id && !m.read).map((m) => m._id);
-        if (unreadMessages.length > 0) {
+        const unreadIds = msgs.filter(m => m.to === meRes.data.user._id && !m.read).map(m => m._id);
+        if (unreadIds.length > 0) {
           socketRef.current?.emit("message_read", {
-            messageIds: unreadMessages,
+            messageIds: unreadIds,
             from: meRes.data.user._id,
             to: id,
           });
-
-          setMessages((prev) =>
-            prev.map((m) => (unreadMessages.includes(m._id) ? { ...m, read: true } : m))
+          setMessages(prev =>
+            prev.map(m => (unreadIds.includes(m._id) ? { ...m, read: true } : m))
           );
         }
       }
     };
+
     fetchData();
   }, [id]);
 
-  
-  //socket setup
+  // Setup socket
   useEffect(() => {
-    socketRef.current = io("http://localhost:4010", { transports: ["websocket"], withCredentials: true });
-    
-    socketRef.current.on("receive_message", (msg: IMessage) => setMessages((prev) => [...prev, msg]));
-    socketRef.current.on("message_deleted", (msgId: string) => setMessages((prev) => prev.filter((m) => m._id !== msgId)));
-    socketRef.current.on("message_edited", (data: IMessage) =>
-      setMessages((prev) => prev.map((m) => (m._id === data._id ? { ...m, text: data.text } : m)))
-  );
-  socketRef.current.on("message_read", (data: { messageIds: string[] }) =>
-    setMessages((prev) => prev.map((m) => (data.messageIds.includes(m._id) ? { ...m, read: true } : m)))
-);
+    socketRef.current = io("http://localhost:4010", {
+      transports: ["websocket"],
+      withCredentials: true
+    });
 
-return () => socketRef.current?.disconnect();
-}, []);
+    const socket = socketRef.current;
 
-//join the user
-useEffect(() => {
-  if(myself?._id) {
-    socketRef.current?.emit("join", myself._id)
-  }
-}, [myself])
+    socket.on("receive_message", (msg: IMessage) => setMessages(prev => [...prev, msg]));
+    socket.on("message_sent", (msg: IMessage) => setMessages(prev => [...prev, msg]));
+    socket.on("receive_message_error", (err: { error: string }) => setBlockedError(err.error));
+    socket.on("message_deleted", (msgId: string) => setMessages(prev => prev.filter(m => m._id !== msgId)));
+    socket.on("message_edited", (data: IMessage) =>
+      setMessages(prev => prev.map(m => (m._id === data._id ? { ...m, text: data.text } : m)))
+    );
+    socket.on("message_read", (data: { messageIds: string[] }) =>
+      setMessages(prev => prev.map(m => (data.messageIds.includes(m._id) ? { ...m, read: true } : m)))
+    );
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  // Join user room
+  useEffect(() => {
+    if (myself?._id) socketRef.current?.emit("join", myself._id);
+  }, [myself]);
 
   // Scroll to bottom
   useEffect(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
 
-  // Close context menu on outside click
+  // Close context menu
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest(".message-bubble")) setContextMenu(null);
+      if (!(e.target as HTMLElement).closest(".message-bubble")) setContextMenu(null);
     };
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
   }, []);
 
-  const showToast = (message: string) => {
-    setToast(message);
+  // Blocked toast
+  useEffect(() => {
+    if (!blockedError) return;
+    const t = setTimeout(() => setBlockedError(""), 2000);
+    return () => clearTimeout(t);
+  }, [blockedError]);
+
+  const showToast = (msg: string) => {
+    setToast(msg);
     setTimeout(() => setToast(null), 1500);
   };
 
-  const isMine = (msg: IMessage) => msg.from == myself?._id;
+  const isMine = (msg: IMessage) => msg.from === myself?._id;
 
+  // Send message
   const sendMessage = async () => {
     if (!text.trim() && !attachment) return;
     if (!user?._id || !myself?._id) return;
@@ -104,47 +122,46 @@ useEffect(() => {
     let attachmentUrl: string | undefined = undefined;
 
     if (attachment) {
-      const formData = new FormData()
-      formData.append("attachment", attachment)
-      
+      const formData = new FormData();
+      formData.append("attachment", attachment);
       try {
-        const res = await Axios.patch('/chats/upload', formData)
-        attachmentUrl = import.meta.env.VITE_BASE + res.data.url
-      } catch (error) {
-        setToast("Failed to upload the file")
-        return
+        const res = await Axios.patch("/chats/upload", formData);
+        attachmentUrl = import.meta.env.VITE_BASE + res.data.url;
+      } catch {
+        showToast("Failed to upload the file");
+        return;
       }
     }
 
-    emitMessage(attachmentUrl)
+    emitMessage(attachmentUrl);
   };
 
-  const emitMessage = async (attachmentUrl?: string) => {
+  const emitMessage = (attachmentUrl?: string) => {
     const newMsg = {
       from: myself!._id,
       to: user!._id,
       text: text.trim(),
       attachment: attachmentUrl,
       createdAt: new Date().toISOString(),
-      read: false,
+      read: false
     };
 
-
-    setMessages((prev) => [...prev, newMsg]);
     socketRef.current?.emit("send_message", newMsg);
-
     setText("");
     setAttachment(null);
   };
 
   const handleDelete = (msgId: string) => {
     socketRef.current?.emit("delete_message", msgId);
-    setMessages((prev) => prev.filter((m) => m._id !== msgId));
-    if (editingMsgId === msgId) { setEditingMsgId(null); setText(""); }
+    setMessages(prev => prev.filter(m => m._id !== msgId));
+    if (editingMsgId === msgId) {
+      setEditingMsgId(null);
+      setText("");
+    }
   };
 
   const handleEdit = (msgId: string) => {
-    const msg = messages.find((m) => m._id === msgId);
+    const msg = messages.find(m => m._id === msgId);
     if (!msg) return;
     setEditingMsgId(msgId);
     setText(msg.text);
@@ -152,16 +169,16 @@ useEffect(() => {
 
   const saveEdit = () => {
     if (!editingMsgId) return;
-    const msg = messages.find((m) => m._id === editingMsgId);
+    const msg = messages.find(m => m._id === editingMsgId);
     if (!msg) return;
     socketRef.current?.emit("edit_message", { ...msg, text });
-    setMessages((prev) => prev.map((m) => (m._id === editingMsgId ? { ...m, text } : m)));
+    setMessages(prev => prev.map(m => (m._id === editingMsgId ? { ...m, text } : m)));
     setEditingMsgId(null);
     setText("");
   };
 
   const handleCopy = async (msgId: string) => {
-    const msg = messages.find((m) => m._id === msgId);
+    const msg = messages.find(m => m._id === msgId);
     if (!msg?.text) return;
     await navigator.clipboard.writeText(msg.text);
     showToast("Copied to clipboard");
@@ -194,13 +211,13 @@ useEffect(() => {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-6 space-y-5">
-        {messages.map((msg) => {
+        {messages.map(msg => {
           const mine = isMine(msg);
           return (
             <div
               key={msg._id}
               className={`flex items-end gap-3 ${mine ? "justify-end" : "justify-start"}`}
-              onContextMenu={(e) => {
+              onContextMenu={e => {
                 e.preventDefault();
                 e.stopPropagation();
                 if (mine) setContextMenu({ id: msg._id, x: e.clientX, y: e.clientY });
@@ -229,9 +246,7 @@ useEffect(() => {
                 {msg.attachment && (
                   <img src={msg.attachment} alt="attachment" className="mt-3 w-56 h-56 object-cover rounded-lg shadow-md" />
                 )}
-                {mine && (
-                  <span className="absolute bottom-1 right-3 text-xs text-white/80">{msg.read ? "Seen" : "Sent"}</span>
-                )}
+                {mine && <span className="absolute bottom-1 right-3 text-xs text-white/80">{msg.read ? "Seen" : "Sent"}</span>}
               </motion.div>
 
               {mine && (
@@ -267,14 +282,11 @@ useEffect(() => {
             type="text"
             placeholder="Type a message..."
             value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" ? (editingMsgId ? saveEdit() : sendMessage()) : null}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => e.key === "Enter" ? (editingMsgId ? saveEdit() : sendMessage()) : null}
             className="flex-1 bg-green-50/50 border border-green-300 rounded-full px-5 py-3 text-base focus:outline-none focus:ring-2 focus:ring-green-400 backdrop-blur-sm"
           />
-          <button
-            onClick={editingMsgId ? saveEdit : sendMessage}
-            className="bg-green-500 hover:bg-green-600 rounded-full p-3 transition shadow-lg"
-          >
+          <button onClick={editingMsgId ? saveEdit : sendMessage} className="bg-green-500 hover:bg-green-600 rounded-full p-3 transition shadow-lg">
             {editingMsgId ? <Edit className="w-6 h-6 text-white" /> : <Send className="w-6 h-6 text-white" />}
           </button>
         </div>
@@ -293,21 +305,23 @@ useEffect(() => {
             <button className="block w-full px-5 py-3 text-left hover:bg-gray-100" onClick={() => handleEdit(contextMenu.id)}>✏️ Edit</button>
             <button className="block w-full px-5 py-3 text-left text-blue-600 hover:bg-blue-50" onClick={() => handleCopy(contextMenu.id)}>📋 Copy</button>
             <button className="block w-full px-5 py-3 text-left text-red-600 hover:bg-red-50" onClick={() => handleDelete(contextMenu.id)}>🗑 Delete</button>
-            <button className="block w-full px-5 py-3 text-left hover:bg-gray-100" onClick={() => {setContextMenu(null); setEditingMsgId(null); setText("")}}>✖ Cancel</button>
+            <button className="block w-full px-5 py-3 text-left hover:bg-gray-100" onClick={() => { setContextMenu(null); setEditingMsgId(null); setText(""); }}>✖ Cancel</button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Toast */}
+      {/* Toasts */}
       <AnimatePresence>
         {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 30 }}
-            className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-2xl shadow-xl text-sm font-semibold"
-          >
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }}
+            className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-green-600 text-white px-6 py-3 rounded-2xl shadow-xl text-sm font-semibold">
             {toast}
+          </motion.div>
+        )}
+        {blockedError && (
+          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 30 }}
+            className="fixed bottom-12 left-1/2 -translate-x-1/2 bg-red-600 text-white px-6 py-3 rounded-2xl shadow-xl text-sm font-semibold">
+            {blockedError}
           </motion.div>
         )}
       </AnimatePresence>
