@@ -2,7 +2,7 @@ const { Server } = require("socket.io");
 const { createServer } = require("http");
 const express = require("express");
 const { connect } = require("../db/db.js"); // MongoDB connection
-const { Message, GroupMessage } = require("../schemas/schema.js");
+const { Message, GroupMessage, Blocks } = require("../schemas/schema.js");
 const { default: mongoose } = require("mongoose");
 const { group } = require("console");
 const dotenv = require("dotenv")
@@ -31,6 +31,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("send_message", async (data) => {
+    const { from, to } = data
+    const blocked = await Blocks.findOne({blockedTo: from, blockedBy: to})
+    if(blocked) {
+      return io.in(from).emit("receive_message_error", { error: "this user has blocked you" })
+    }
+    
     try {
       const message = new Message({
         from: data.from,
@@ -42,6 +48,7 @@ io.on("connection", (socket) => {
 
       await message.save();
 
+      io.in(data.from).emit("message_sent", message);
       io.in(data.to).emit("receive_message", message);
     } catch (err) {
       console.error("Error sending message:", err);
