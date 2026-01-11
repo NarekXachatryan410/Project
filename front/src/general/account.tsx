@@ -49,7 +49,6 @@ export default function AccountPage() {
       </div>
     );
 
-  // Toggle block/unblock
   const handleBlockToggle = async (userId: number) => {
     try {
       if (blocked) {
@@ -57,7 +56,6 @@ export default function AccountPage() {
         await Axios.delete(`/account/unblock/${userId}`);
         setBlocked(false);
       } else {
-        // Block
         await Axios.patch(`/account/block/${userId}`);
         setBlocked(true);
       }
@@ -121,7 +119,7 @@ export default function AccountPage() {
             onClick={() => handleBlockToggle(user._id)}
           >
             <UserX className="w-5 h-5" />
-            {blocked ? "UnBlock" : "Block"}
+            {blocked ? "Unblock" : "Block"}
           </motion.button>
         </div>
       </motion.div>
