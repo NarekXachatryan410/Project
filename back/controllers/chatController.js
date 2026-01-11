@@ -22,38 +22,6 @@ class ChatController {
     return res.status(200).send({ messages });
   }
 
-  // Send a message to a peer
-  async sendMessageById(req, res) {
-    const { text } = req.body;
-    const { id: peerId } = req.params;
-    const { id: userId } = req.user;
-
-    if (!text && !attachment)
-      return res.status(400).send({ error: "Message cannot be empty" });
-
-    const message = new Message({
-      from: userId,
-      to: peerId,
-      text,
-    });
-
-    await message.save();
-    return res.status(201).send({ message });
-  }
-
-  // Delete a message by its ID
-  async deleteMessageById(req, res) {
-    const { id } = req.params;
-    const { id: userId } = req.user;
-    const message = await Message.findOne({ _id: id });
-    if (userId.toString() == message.to.toString()) {
-      return res
-        .status(403)
-        .send({ error: "You cannot delete this comment, its not yours" });
-    }
-    return res.status(200).send({ message: "Message deleted" });
-  }
-
   async getChats(req, res) {
     try {
       const { id } = req.user;
