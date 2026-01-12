@@ -37,9 +37,7 @@ accountRouter.delete('/unblock/:id', authMiddlware, accountController.unBlockUse
 //accountRouter
 ///////////////////////////////////////////////////////////////////////////
 //chatRouter
-chatRouter.post("/:id", authMiddlware, chatController.sendMessageById)
 chatRouter.get('/:id', authMiddlware, chatController.getChatWithUser)
-chatRouter.delete("/:id", authMiddlware, chatController.deleteMessageById)
 chatRouter.get('/', authMiddlware, chatController.getChats)
 chatRouter.patch("/upload", authMiddlware, upload.single("attachment"), chatController.upload)
 chatRouter.delete('/chat/:id', authMiddlware, chatController.deleteChatById)
