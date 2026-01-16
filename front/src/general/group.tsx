@@ -3,9 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Axios } from "../api/api";
 import { Send, Image as ImageIcon, ArrowLeft } from "lucide-react";
 import type { IUser, IGroupMessage, IGroup } from "../lib/types";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { io, type Socket } from "socket.io-client";
-import ConfirmExitModal from "../modals/exitGroup";
 
 export default function GroupPage() {
   const { id: groupId } = useParams<{ id: string }>();
@@ -26,7 +25,6 @@ export default function GroupPage() {
   const socketRef = useRef<Socket | null>(null);
   const navigate = useNavigate();
   const [toast, setToast] = useState<string | null>(null);
-  const location = useLocation()
 
   // ---------------- INIT USER + SOCKET ----------------
   useEffect(() => {
