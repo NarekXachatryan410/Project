@@ -5,15 +5,7 @@ import { Axios } from "../api/api";
 import { Search, Trash2 } from "lucide-react";
 import type { IUser } from "../lib/types";
 import DeleteChatModal from "../modals/deleteChat";
-
-interface IChatPreview {
-  _id: string;
-  from: IUser;
-  to: IUser;
-  text: string;
-  createdAt: string;
-  read: boolean;
-}
+import { type IChatPreview } from "../lib/types"
 
 export default function ChatsPage() {
   const [chats, setChats] = useState<IChatPreview[]>([]);
