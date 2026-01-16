@@ -1,4 +1,3 @@
-"use client";
 import { motion } from "framer-motion";
 import { Search, ArrowLeft, Clock } from "lucide-react";
 import { useEffect, useState } from "react";
