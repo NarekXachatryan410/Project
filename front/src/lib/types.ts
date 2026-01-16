@@ -40,3 +40,12 @@ export interface IOutletContext {
     user: IUser
     setUser: (user: IUser) => void
 }
+
+export interface IChatPreview {
+  _id: string;
+  from: IUser;
+  to: IUser;
+  text: string;
+  createdAt: string;
+  read: boolean;
+}
