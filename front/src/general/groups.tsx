@@ -13,7 +13,6 @@ export default function GroupsPage() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [groups, setGroups] = useState<IGroup[]>([]);
   const [error, setError] = useState("");
-  const [confirmExit, setConfirmExit] = useState(false);
   const [groupToExit, setGroupToExit] = useState<IGroup | null>(null);
   const navigate = useNavigate();
 
