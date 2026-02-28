@@ -12,6 +12,8 @@ const userSchema = new Schema({
   resetCodeExpiry: Date,
 });
 
+userSchema.index({login: 1, email: -1 })
+
 const messageSchema = new Schema(
   {
     from: { type: Schema.Types.ObjectId, ref: "User" },

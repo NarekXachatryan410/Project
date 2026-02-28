@@ -16,10 +16,19 @@ import VerifyEmail from './auth/verifyEmail.tsx'
 import ChatPage from './general/chat.tsx'
 import ChatsPage from './general/chats.tsx'
 import GroupPage from './general/group.tsx'
+import { PublicRoute } from './PublicRoute.tsx'
 
 const router = createBrowserRouter([
-  {path: '/', element: <SignupPage/>},
-  {path: '/login', element: <LoginPage/>},
+  {path: '/', element: 
+    <PublicRoute>
+      <SignupPage/>
+    </PublicRoute>
+  },
+  {path: '/login', element: 
+    <PublicRoute>
+      <LoginPage/>
+    </PublicRoute>
+  },
   {path: "forgot-password", element: <ForgotPasswordPage/>},
   {path: "verify-code", element: <VerifyCodePage/>},
   {path: "password-reset", element: <MakeNewPasswordPage/>},
